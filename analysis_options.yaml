@@ -1,0 +1,28 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  errors:
+    unused_import: error
+    unused_local_variable: error
+    dead_code: error
+  language:
+    strict-casts: true
+
+linter:
+  rules:
+    - always_declare_return_types
+    - always_use_package_imports
+    - annotate_overrides
+    - avoid_print
+    - avoid_unnecessary_containers
+    - cascade_invocations
+    - omit_local_variable_types
+    - prefer_const_constructors
+    - prefer_const_declarations
+    - prefer_expression_function_bodies
+    - prefer_final_locals
+    - prefer_single_quotes
+    - sized_box_for_whitespace
+    - sort_constructors_first
+    - unawaited_futures
+    - unnecessary_lambdas

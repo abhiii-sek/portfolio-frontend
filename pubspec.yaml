@@ -1,0 +1,51 @@
+name: flutter_web_portfolio
+description: 'Modern and responsive Flutter web portfolio application.'
+repository: https://github.com/Yusufihsangorgel/Flutter-Web-Portfolio
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.7.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  flutter_i18n: ^0.36.2
+
+  # State management & navigation
+  get: ^4.6.6
+
+  # UI components
+  google_fonts: ^6.1.0
+  url_launcher: ^6.2.2
+  http: ^1.2.2
+
+  # Context extensions (responsive sizing helpers)
+  kartal: ^4.2.0
+
+  # Responsive layout (reserved)
+
+  # Localization
+  intl: ^0.20.2
+
+  # Storage
+  shared_preferences: ^2.2.2
+  web: ^1.1.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/animations/
+    - assets/data/
+
+  generate: true

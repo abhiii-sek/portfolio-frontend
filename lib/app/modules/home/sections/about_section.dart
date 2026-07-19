@@ -1,0 +1,648 @@
+import 'dart:math' as math;
+
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_web_portfolio/app/controllers/language_controller.dart';
+import 'package:flutter_web_portfolio/app/controllers/scene_director.dart';
+import 'package:flutter_web_portfolio/app/core/constants/app_colors.dart';
+import 'package:flutter_web_portfolio/app/core/constants/cinematic_curves.dart';
+import 'package:flutter_web_portfolio/app/core/constants/durations.dart';
+import 'package:flutter_web_portfolio/app/core/theme/app_typography.dart';
+import 'package:flutter_web_portfolio/app/utils/responsive_utils.dart';
+import 'package:flutter_web_portfolio/app/widgets/numbered_section_heading.dart';
+import 'package:flutter_web_portfolio/app/core/constants/app_config.dart';
+import 'package:flutter_web_portfolio/app/widgets/animated_stats.dart';
+import 'package:flutter_web_portfolio/app/widgets/scroll_fade_in.dart';
+import 'package:flutter_web_portfolio/app/core/constants/breakpoints.dart';
+import 'package:flutter_web_portfolio/app/widgets/border_light_card.dart';
+import 'package:flutter_web_portfolio/app/widgets/skill_bar_chart.dart';
+import 'package:flutter_web_portfolio/app/widgets/skill_orbit.dart';
+
+/// About Section — "The Introduction"
+/// Giant watermark, flashlight photo, floating tech pills.
+class AboutSection extends StatelessWidget {
+  const AboutSection({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final languageController = Get.find<LanguageController>();
+    final isMobile = ResponsiveUtils.isMobile(context);
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final data = languageController.cvData['personal_info'] as Map<String, dynamic>? ?? <String, dynamic>{};
+
+    return Container(
+      width: double.infinity,
+      constraints: const BoxConstraints(maxWidth: 1100),
+      child: Stack(
+        children: [
+          Positioned(
+            top: -20,
+            left: -10,
+            child: Obx(() => Text(
+              languageController.getText('nav.about', defaultValue: 'About').toUpperCase(),
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: ResponsiveUtils.getValueForScreenType<double>(
+                  context: context,
+                  mobile: 48.0,
+                  tablet: screenWidth * 0.14,
+                  desktop: screenWidth * 0.18,
+                ),
+                fontWeight: FontWeight.w800,
+                color: Colors.white.withValues(alpha: 0.05),
+                letterSpacing: -4,
+              ),
+            )),
+          ),
+          // Content
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 40),
+              if (isMobile)
+                _buildMobileLayout(data, languageController)
+              else
+                _buildDesktopLayout(data, languageController),
+              // Animated stats row
+              if (AppConfig.hasStats(languageController)) ...[
+                const SizedBox(height: 48),
+                ScrollFadeIn(
+                  delay: AppDurations.staggerShort,
+                  child: Obx(() {
+                    final accent = Get.find<SceneDirector>().currentAccent.value;
+                    return Wrap(
+                      spacing: 16,
+                      runSpacing: 16,
+                      alignment: WrapAlignment.center,
+                      children: [
+                        if (AppConfig.yearsExperience(languageController) > 0)
+                          AnimatedStatCard(
+                            value: AppConfig.yearsExperience(languageController),
+                            suffix: '+',
+                            label: languageController.getText(
+                              'about_section.years_exp',
+                              defaultValue: 'Years Experience',
+                            ),
+                            accentColor: accent,
+                          ),
+                        if (AppConfig.projectsCompleted(languageController) > 0)
+                          AnimatedStatCard(
+                            value: AppConfig.projectsCompleted(languageController),
+                            suffix: '+',
+                            label: languageController.getText(
+                              'about_section.projects',
+                              defaultValue: 'Projects Completed',
+                            ),
+                            accentColor: accent,
+                            delay: const Duration(milliseconds: 200),
+                          ),
+                        if (AppConfig.technologies(languageController) > 0)
+                          AnimatedStatCard(
+                            value: AppConfig.technologies(languageController),
+                            suffix: '+',
+                            label: languageController.getText(
+                              'about_section.technologies',
+                              defaultValue: 'Technologies',
+                            ),
+                            accentColor: accent,
+                            delay: const Duration(milliseconds: 400),
+                          ),
+                      ],
+                    );
+                  }),
+                ),
+              ],
+              
+              // ── Education ──────────────────────────────────────────────
+              Obx(() {
+                final raw = languageController.cvData['education'] as List? ?? [];
+                final educations = raw.cast<Map<String, dynamic>>();
+                if (educations.isEmpty) return const SizedBox.shrink();
+
+                final accent = Get.find<SceneDirector>().currentAccent.value;
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 72),
+                    ScrollFadeIn(
+                      child: Text(
+                        languageController.getText('about_section.education_title', defaultValue: 'Education'),
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textBright,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ScrollFadeIn(
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isMobile = constraints.maxWidth < Breakpoints.mobile;
+                          final count = educations.length > 0 ? educations.length : 1;
+                          final cardWidth = isMobile
+                              ? double.infinity
+                              : (constraints.maxWidth - (24 * (count - 1))) / count;
+
+                          return Wrap(
+                            spacing: 24,
+                            runSpacing: 24,
+                            children: educations.map((edu) {
+                              final school = (edu['school'] as String?) ?? '';
+                              final degree = (edu['degree'] as String?) ?? '';
+                              final year = (edu['year'] as String?) ??
+                                  '${edu['from'] ?? ''} — ${edu['to'] ?? ''}';
+                              final pct = edu['percentage']?.toString() ?? '';
+
+                              return SizedBox(
+                                width: cardWidth,
+                                child: BorderLightCard(
+                                  borderRadius: 12.0,
+                                  glowColor: accent,
+                                  padding: const EdgeInsets.all(24),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              school,
+                                              style: GoogleFonts.spaceGrotesk(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.textBright,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          if (pct.isNotEmpty && pct != '0' && pct != '0.0' && pct != '0.0%')
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: accent.withValues(alpha: 0.1),
+                                                borderRadius: BorderRadius.circular(20),
+                                                border: Border.all(
+                                                  color: accent.withValues(alpha: 0.2),
+                                                  width: 1,
+                                                ),
+                                              ),
+                                              child: Text(
+                                                pct.endsWith('%') ? pct : '$pct%',
+                                                style: GoogleFonts.spaceGrotesk(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: accent,
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        degree,
+                                        style: GoogleFonts.jetBrainsMono(
+                                          fontSize: 13,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.calendar_today_rounded,
+                                            size: 14,
+                                            color: accent.withValues(alpha: 0.7),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            year,
+                                            style: GoogleFonts.jetBrainsMono(
+                                              fontSize: 12,
+                                              color: AppColors.textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              }),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopLayout(Map<String, dynamic> data, LanguageController languageController) => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Expanded(
+        flex: 3,
+        child: ScrollFadeIn(
+          child: _BioContent(data: data, languageController: languageController),
+        ),
+      ),
+      const SizedBox(width: 48),
+      Expanded(
+        flex: 2,
+        child: ScrollFadeIn(
+          delay: AppDurations.staggerMedium,
+          child: _FlashlightPhoto(),
+        ),
+      ),
+    ],
+  );
+
+  Widget _buildMobileLayout(Map<String, dynamic> data, LanguageController languageController) => Column(
+    children: [
+      ScrollFadeIn(child: _FlashlightPhoto()),
+      const SizedBox(height: 32),
+      ScrollFadeIn(
+        delay: AppDurations.staggerMedium,
+        child: _BioContent(data: data, languageController: languageController),
+      ),
+    ],
+  );
+}
+
+// Bio content with staggered word reveal
+class _BioContent extends StatefulWidget {
+  const _BioContent({required this.data, required this.languageController});
+
+  final Map<String, dynamic> data;
+  final LanguageController languageController;
+
+  @override
+  State<_BioContent> createState() => _BioContentState();
+}
+
+class _BioContentState extends State<_BioContent>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _barController;
+
+  // Hardcoded relative proficiency per category.
+  static const _proficiencyMap = <String, double>{
+    'Mobile': 0.95,
+    'Backend': 0.80,
+    'Frontend': 0.70,
+    'DevOps': 0.65,
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    // Total animation budget: 800ms per bar + 100ms stagger * 3 gaps = 1100ms.
+    _barController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    );
+  }
+
+  @override
+  void dispose() {
+    _barController.dispose();
+    super.dispose();
+  }
+
+  List<String> _categoryLabels() {
+    final skills =
+        widget.languageController.cvData['skills'] as List? ?? [];
+    return skills
+        .map<String>((s) => (s as Map<String, dynamic>)['category'] as String)
+        .toList();
+  }
+
+  List<double> _categoryProficiencies(List<String> labels) =>
+      labels.map((l) => _proficiencyMap[l] ?? 0.60).toList();
+
+  @override
+  Widget build(BuildContext context) {
+    final sceneDirector = Get.find<SceneDirector>();
+    final isMobile = ResponsiveUtils.isMobile(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section label
+        Obx(() => NumberedSectionHeading(
+          number: '01',
+          title: widget.languageController.getText(
+            'about_section.title',
+            defaultValue: 'About Me',
+          ),
+          accent: sceneDirector.currentAccent.value,
+        )),
+        const SizedBox(height: 24),
+        Text(
+          (widget.data['bio'] as String?) ??
+              widget.languageController.getText(
+                'about_section.bio',
+                defaultValue:
+                    'I enjoy creating things that live on the internet, '
+                    'whether that be websites, applications, or anything in between. '
+                    'My goal is to always build products that provide pixel-perfect, '
+                    'performant experiences.',
+              ),
+          style: AppTypography.body,
+        ),
+        const SizedBox(height: 16),
+        Text(
+          widget.languageController.getText(
+            'about_section.bio2',
+            defaultValue:
+                'Here are a few technologies I\'ve been working with recently:',
+          ),
+          style: AppTypography.body,
+        ),
+        const SizedBox(height: 24),
+        // Floating tech pills — derived from cvData skills
+        _FloatingTechPills(
+          sceneDirector: sceneDirector,
+          languageController: widget.languageController,
+        ),
+        const SizedBox(height: 32),
+        // Skill orbit — desktop only (too dense for mobile).
+        if (!isMobile) ...[
+          ScrollFadeIn(
+            delay: AppDurations.staggerMedium,
+            child: Obx(() {
+              final accent = sceneDirector.currentAccent.value;
+              final rawSkills =
+                  widget.languageController.cvData['skills'] as List? ?? [];
+              if (rawSkills.isEmpty) return const SizedBox.shrink();
+              final skills = rawSkills.cast<Map<String, dynamic>>();
+              return ClipRect(child: SkillOrbit(skills: skills, accent: accent));
+            }),
+          ),
+          const SizedBox(height: 32),
+        ],
+        // Skill proficiency chart
+        ScrollFadeIn(
+          delay: AppDurations.staggerMedium,
+          child: Obx(() {
+            final accent = sceneDirector.currentAccent.value;
+            final labels = _categoryLabels();
+            if (labels.isEmpty) return const SizedBox.shrink();
+            return _SkillChartAnimator(
+              controller: _barController,
+              accent: accent,
+              categories: labels,
+              proficiencies: _categoryProficiencies(labels),
+              barHeight: isMobile ? 20.0 : 28.0,
+            );
+          }),
+        ),
+      ],
+    );
+  }
+}
+
+/// Wrapper that triggers the bar animation when the [ScrollFadeIn] ancestor
+/// first becomes visible. It starts the supplied [controller] on init so the
+/// bars animate in sync with the scroll-triggered fade.
+class _SkillChartAnimator extends StatefulWidget {
+  const _SkillChartAnimator({
+    required this.controller,
+    required this.accent,
+    required this.categories,
+    required this.proficiencies,
+    required this.barHeight,
+  });
+
+  final AnimationController controller;
+  final Color accent;
+  final List<String> categories;
+  final List<double> proficiencies;
+  final double barHeight;
+
+  @override
+  State<_SkillChartAnimator> createState() => _SkillChartAnimatorState();
+}
+
+class _SkillChartAnimatorState extends State<_SkillChartAnimator> {
+  @override
+  void initState() {
+    super.initState();
+    // Begin fill animation (the ScrollFadeIn handles visibility gating).
+    if (!widget.controller.isAnimating && !widget.controller.isCompleted) {
+      widget.controller.forward();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => SkillBarChart(
+        categories: widget.categories,
+        proficiencies: widget.proficiencies,
+        accent: widget.accent,
+        animation: widget.controller,
+        barHeight: widget.barHeight,
+      );
+}
+
+// Floating tech pills — data-driven from cvData skills
+class _FloatingTechPills extends StatelessWidget {
+  const _FloatingTechPills({
+    required this.sceneDirector,
+    required this.languageController,
+  });
+  final SceneDirector sceneDirector;
+  final LanguageController languageController;
+
+  List<String> _getTechnologies() {
+    final skills = languageController.cvData['skills'] as List? ?? [];
+    return skills.map<String>((s) {
+      final items = ((s as Map<String, dynamic>)['items'] as List?) ?? [];
+      return items.take(3).join(' · ');
+    }).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) => Obx(() {
+    final accent = sceneDirector.currentAccent.value;
+    final technologies = _getTechnologies();
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: technologies.map((tech) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: accent.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: accent.withValues(alpha: 0.15),
+            width: 1,
+          ),
+        ),
+        child: Text(
+          tech,
+          style: GoogleFonts.jetBrainsMono(
+            fontSize: 13,
+            color: accent,
+          ),
+        ),
+      )).toList(),
+    );
+  });
+}
+
+class _FlashlightPhoto extends StatefulWidget {
+  @override
+  State<_FlashlightPhoto> createState() => _FlashlightPhotoState();
+}
+
+class _FlashlightPhotoState extends State<_FlashlightPhoto> {
+  final _mousePos = ValueNotifier<Offset>(const Offset(0.5, 0.5));
+  final _hovered = ValueNotifier<bool>(false);
+
+  /// Max tilt angle in radians (3 degrees).
+  static const double _maxTilt = 3.0 * math.pi / 180.0;
+  static const double _perspective = 0.001;
+  static const double _shadowMultiplier = 8.0;
+
+  @override
+  void dispose() {
+    _mousePos.dispose();
+    _hovered.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => MouseRegion(
+      onEnter: (_) => _hovered.value = true,
+      onHover: (e) {
+        final box = context.findRenderObject() as RenderBox?;
+        if (box == null) return;
+        _mousePos.value = Offset(
+          e.localPosition.dx / box.size.width,
+          e.localPosition.dy / box.size.height,
+        );
+      },
+      onExit: (_) {
+        _hovered.value = false;
+        _mousePos.value = const Offset(0.5, 0.5);
+      },
+      child: ValueListenableBuilder<Offset>(
+        valueListenable: _mousePos,
+        builder: (context, mousePos, child) =>
+            ValueListenableBuilder<bool>(
+          valueListenable: _hovered,
+          builder: (context, hovered, _) {
+            // Normalized values centered around 0 (-1 to 1 range)
+            final dx = (mousePos.dx - 0.5) * 2.0;
+            final dy = (mousePos.dy - 0.5) * 2.0;
+
+            // Tilt transform: rotateY follows horizontal, rotateX follows vertical
+            final tiltTransform = Matrix4.identity()
+              ..setEntry(3, 2, _perspective)
+              ..rotateY(hovered ? dx * _maxTilt : 0)
+              ..rotateX(hovered ? -dy * _maxTilt : 0);
+
+            // Shadow shifts opposite to tilt direction
+            final shadowOffsetX = hovered ? -dx * _shadowMultiplier : 0.0;
+            final shadowOffsetY = hovered ? -dy * _shadowMultiplier : 0.0;
+
+            return AnimatedContainer(
+              duration: AppDurations.medium,
+              curve: CinematicCurves.hoverLift,
+              transform: tiltTransform,
+              transformAlignment: Alignment.center,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: hovered
+                    ? [
+                        BoxShadow(
+                          color: AppColors.heroAccent.withValues(alpha: 0.12),
+                          blurRadius: 30,
+                          spreadRadius: 0,
+                          offset: Offset(shadowOffsetX, shadowOffsetY),
+                        ),
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          blurRadius: 20,
+                          spreadRadius: -4,
+                          offset: Offset(shadowOffsetX * 0.5, shadowOffsetY * 0.5),
+                        ),
+                      ]
+                    : [],
+              ),
+              child: child,
+            );
+          },
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: ValueListenableBuilder<Offset>(
+            valueListenable: _mousePos,
+            builder: (context, mousePos, child) =>
+                ValueListenableBuilder<bool>(
+              valueListenable: _hovered,
+              builder: (context, hovered, _) => ShaderMask(
+                blendMode: BlendMode.dstIn,
+                shaderCallback: (bounds) => RadialGradient(
+                  center: Alignment(
+                    mousePos.dx * 2 - 1,
+                    mousePos.dy * 2 - 1,
+                  ),
+                  radius: hovered ? 1.2 : 2.0,
+                  colors: [
+                    Colors.white,
+                    Colors.white.withValues(alpha: 0.8),
+                    Colors.white.withValues(alpha: hovered ? 0.2 : 0.5),
+                  ],
+                  stops: const [0.0, 0.4, 1.0],
+                ).createShader(bounds),
+                child: child,
+              ),
+            ),
+            child: Semantics(
+              image: true,
+              label: 'Profile photo',
+              child: Image.asset(
+                'assets/images/me.jpeg',
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => AspectRatio(
+                  aspectRatio: 1,
+                  child: Container(
+                    color: AppColors.backgroundLight,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.person_outline_rounded,
+                          size: 64,
+                          color: AppColors.textSecondary.withValues(alpha: 0.3),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'YG',
+                          style: GoogleFonts.spaceGrotesk(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textSecondary.withValues(alpha: 0.4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+}
