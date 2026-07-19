@@ -17,6 +17,8 @@ import 'package:flutter_web_portfolio/app/widgets/numbered_section_heading.dart'
 import 'package:flutter_web_portfolio/app/widgets/project_detail_overlay.dart';
 import 'package:flutter_web_portfolio/app/widgets/scroll_fade_in.dart';
 import 'package:flutter_web_portfolio/app/widgets/text_scramble.dart';
+import 'package:flutter_web_portfolio/app/modules/home/sections/projects/github_activity.dart';
+
 
 /// Projects Section — "The Showcase"
 /// Film strip layout with border-light cards + category filter chips.
@@ -162,6 +164,8 @@ class _ProjectsSectionState extends State<ProjectsSection> {
                   ],
                 ),
               ),
+              const SizedBox(height: 50,),
+              const GitHubActivity(),
             ],
           ),
         ],
@@ -326,7 +330,7 @@ class _ProjectCardState extends State<_ProjectCard> {
       if (!_hasCaseStudy) {
         return GestureDetector(
           onTap: () => ProjectDetailOverlay.show(context, project),
-          child: frontCard,
+          child: SizedBox(width: double.infinity, child: frontCard),
         );
       }
 
@@ -334,49 +338,72 @@ class _ProjectCardState extends State<_ProjectCard> {
       if (isMobile) {
         return GestureDetector(
           onTap: () => _showCaseStudySheet(context, project, accent),
-          child: Stack(
-            children: [
-              frontCard,
-              Positioned(
-                bottom: 8,
-                right: 8,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: accent.withValues(alpha: 0.2)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.auto_stories_rounded, size: 12, color: accent),
-                      const SizedBox(width: 4),
-                      Text(
-                        Get.find<LanguageController>().getText(
-                          'projects_section.case_study_label',
-                          defaultValue: 'Case Study',
+          child: SizedBox(
+            width: double.infinity,
+            child: Stack(
+              children: [
+                frontCard,
+                Positioned(
+                  bottom: 8,
+                  right: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: accent.withValues(alpha: 0.2)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.auto_stories_rounded, size: 12, color: accent),
+                        const SizedBox(width: 4),
+                        Text(
+                          Get.find<LanguageController>().getText(
+                            'projects_section.case_study_label',
+                            defaultValue: 'Case Study',
+                          ),
+                          style: GoogleFonts.jetBrainsMono(fontSize: 10, color: accent),
                         ),
-                        style: GoogleFonts.jetBrainsMono(fontSize: 10, color: accent),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       }
 
-      return _FlipCard(
-        front: frontCard,
-        back: _ProjectCardBack(
-          project: project,
-          isMobile: isMobile,
-          accent: accent,
+      return SizedBox(
+        width: double.infinity,
+        child: _FlipCard(
+          front: SizedBox(width: double.infinity, child: frontCard),
+          back: SizedBox(
+            width: double.infinity,
+            child: _ProjectCardBack(
+              project: project,
+              isMobile: isMobile,
+              accent: accent,
+            ),
+          ),
         ),
       );
     });
+  }
+
+  String _getFallbackImage(String title) {
+    final lowercaseTitle = title.toLowerCase();
+    if (lowercaseTitle.contains('bank') || lowercaseTitle.contains('finance')) {
+      return 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=600&auto=format&fit=crop&q=80'; // banking/finance
+    }
+    if (lowercaseTitle.contains('game') || lowercaseTitle.contains('snake')) {
+      return 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=600&auto=format&fit=crop&q=80'; // gaming/console
+    }
+    if (lowercaseTitle.contains('flix') || lowercaseTitle.contains('video') || lowercaseTitle.contains('movie')) {
+      return 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=600&auto=format&fit=crop&q=80'; // movie/video/AI
+    }
+    return 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&auto=format&fit=crop&q=80'; // generic coding
   }
 
   Widget _buildDesktopContent(
@@ -388,11 +415,31 @@ class _ProjectCardState extends State<_ProjectCard> {
   ) {
     final category = (project['category'] as String?) ?? '';
     final urls = _extractAllUrls(project);
+    final imagePath = (project['image'] as String?) ?? (project['imageUrl'] as String?) ?? '';
+    final fallbackImage = _getFallbackImage(title);
+    final displayImage = imagePath.isNotEmpty ? imagePath : fallbackImage;
 
-    return Column(
+    final imageWidget = ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: AspectRatio(
+        aspectRatio: 16 / 10,
+        child: displayImage.startsWith('assets/')
+            ? Image.asset(
+                displayImage,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Image.network(fallbackImage, fit: BoxFit.cover),
+              )
+            : Image.network(
+                displayImage,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Image.network(fallbackImage, fit: BoxFit.cover),
+              ),
+      ),
+    );
+
+    final textWidget = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header row: category badge + title
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -424,7 +471,6 @@ class _ProjectCardState extends State<_ProjectCard> {
                 ],
               ),
             ),
-            // Platform icons
             if (urls.isNotEmpty)
               Row(
                 mainAxisSize: MainAxisSize.min,
@@ -443,7 +489,6 @@ class _ProjectCardState extends State<_ProjectCard> {
           ],
         ),
         const SizedBox(height: 14),
-        // Description
         Text(
           description,
           style: AppTypography.body.copyWith(height: 1.7),
@@ -451,32 +496,39 @@ class _ProjectCardState extends State<_ProjectCard> {
           overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 18),
-        // Tech pills + Visit CTA row
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Expanded(
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: technologies.take(6).map((tech) => Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    tech,
-                    style: GoogleFonts.jetBrainsMono(
-                      fontSize: 12,
-                      color: accent,
-                    ),
-                  ),
-                )).toList(),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: technologies.take(6).map((tech) => Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
+              tech,
+              style: GoogleFonts.jetBrainsMono(
+                fontSize: 12,
+                color: accent,
               ),
             ),
-          ],
+          )).toList(),
         ),
+      ],
+    );
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (!isReversed) ...[
+          SizedBox(width: 320, child: imageWidget),
+          const SizedBox(width: 28),
+          Expanded(child: textWidget),
+        ] else ...[
+          Expanded(child: textWidget),
+          const SizedBox(width: 28),
+          SizedBox(width: 320, child: imageWidget),
+        ],
       ],
     );
   }
@@ -500,45 +552,69 @@ class _ProjectCardState extends State<_ProjectCard> {
     List<String> technologies,
     String url,
     Color accent,
-  ) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Text(
-              title,
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textBright,
+  ) {
+    final imagePath = (project['image'] as String?) ?? (project['imageUrl'] as String?) ?? '';
+    final fallbackImage = _getFallbackImage(title);
+    final displayImage = imagePath.isNotEmpty ? imagePath : fallbackImage;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: AspectRatio(
+            aspectRatio: 16 / 9,
+            child: displayImage.startsWith('assets/')
+                ? Image.asset(
+                    displayImage,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Image.network(fallbackImage, fit: BoxFit.cover),
+                  )
+                : Image.network(
+                    displayImage,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Image.network(fallbackImage, fit: BoxFit.cover),
+                  ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textBright,
+                ),
               ),
             ),
-          ),
-          if (url.isNotEmpty) _ProjectLink(url: url, accent: accent),
-        ],
-      ),
-      const SizedBox(height: 12),
-      Text(description, style: AppTypography.bodySmall),
-      const SizedBox(height: 16),
-      Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: technologies.map((tech) => Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: accent.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            tech,
-            style: GoogleFonts.jetBrainsMono(fontSize: 11, color: accent),
-          ),
-        )).toList(),
-      ),
-    ],
-  );
+            if (url.isNotEmpty) _ProjectLink(url: url, accent: accent),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Text(description, style: AppTypography.bodySmall),
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: technologies.map((tech) => Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              tech,
+              style: GoogleFonts.jetBrainsMono(fontSize: 11, color: accent),
+            ),
+          )).toList(),
+        ),
+      ],
+    );
+  }
 
   List<String> _extractTechnologies(Map<String, dynamic> project) {
     if (project['technologies'] case final List<dynamic> techs) {
@@ -907,12 +983,15 @@ class _ProjectCardBack extends StatelessWidget {
 
     return BorderLightCard(
       glowColor: accent,
-      child: Stack(
-        children: [
-          SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 260),
+        width: double.infinity,
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Title
                 Text(
@@ -1005,6 +1084,7 @@ class _ProjectCardBack extends StatelessWidget {
           ),
         ],
       ),
+     ),
     );
   }
 

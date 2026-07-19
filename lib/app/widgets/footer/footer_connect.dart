@@ -18,16 +18,30 @@ class _ConnectColumn extends StatelessWidget {
       final data = languageController.cvData['personal_info']
               as Map<String, dynamic>? ??
           <String, dynamic>{};
-      final github = (data['github'] as String?) ?? '';
-      final linkedin = (data['linkedin'] as String?) ?? '';
+      final github = (data['github'] as String?) ?? (data['githubUsername'] as String?) ?? '';
+      final linkedin = (data['linkedin'] as String?) ?? (data['linkedInUsername'] as String?) ?? '';
       final email = (data['email'] as String?) ?? '';
       final twitter = (data['twitter'] as String?) ?? '';
+      final instagram = (data['instagram'] as String?) ?? (data['instagramUsername'] as String?) ?? '';
+
+      final githubUrl = github.isEmpty
+          ? ''
+          : (github.startsWith('http') ? github : 'https://github.com/$github');
+      final linkedinUrl = linkedin.isEmpty
+          ? ''
+          : (linkedin.startsWith('http') ? linkedin : 'https://linkedin.com/in/$linkedin');
+      final twitterUrl = twitter.isEmpty
+          ? ''
+          : (twitter.startsWith('http') ? twitter : 'https://twitter.com/$twitter');
+      final instagramUrl = instagram.isEmpty
+          ? ''
+          : (instagram.startsWith('http') ? instagram : 'https://instagram.com/$instagram');
 
       final links = <SocialLinkData>[
-        if (github.isNotEmpty) SocialPresets.github(github),
-        if (linkedin.isNotEmpty) SocialPresets.linkedin(linkedin),
-        if (twitter.isNotEmpty) SocialPresets.twitter(twitter),
-        if (email.isNotEmpty) SocialPresets.email(email),
+        if (githubUrl.isNotEmpty) SocialPresets.github(githubUrl),
+        if (linkedinUrl.isNotEmpty) SocialPresets.linkedin(linkedinUrl),
+        if (twitterUrl.isNotEmpty) SocialPresets.twitter(twitterUrl),
+        if (instagramUrl.isNotEmpty) SocialPresets.instagram(instagramUrl),
       ];
 
       return Column(

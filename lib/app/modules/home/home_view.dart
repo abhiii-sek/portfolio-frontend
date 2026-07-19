@@ -1,7 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_web_portfolio/app/widgets/github_activity.dart';
 import 'package:get/get.dart';
 import 'package:flutter_web_portfolio/app/routes/app_pages.dart';
 import 'package:flutter_web_portfolio/app/controllers/language_controller.dart';
@@ -271,7 +270,6 @@ class _HomeViewState extends State<HomeView> {
                         context,
                         delay: AppDurations.staggerShort,
                       ),
-                      const SliverToBoxAdapter(child: GitHubActivity()),
                     const SliverToBoxAdapter(child: PremiumFooter()),
                   ],
                   ),

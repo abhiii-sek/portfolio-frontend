@@ -34,8 +34,8 @@ class ContactSection extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      constraints: BoxConstraints(
-        minHeight: context.sized.dynamicHeight(0.6),
+      constraints: const BoxConstraints(
+        minHeight: 0,
       ),
       child: Stack(
         children: [
@@ -72,7 +72,7 @@ class ContactSection extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 60),
+                    const SizedBox(height: 16),
                     // Title
                     ScrollFadeIn(
                       child: Obx(() {
