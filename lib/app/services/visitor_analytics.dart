@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer' as dev;
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -76,11 +77,13 @@ final class VisitorAnalytics {
   static const _keyViewedProjects = 'va_viewed_projects';
   static const _keySectionDurations = 'va_section_durations';
   static const _keyVisitsLog = 'va_visits_log';
+  static const _keyVisitorId = 'va_visitor_id';
 
   // ─── State ─────────────────────────────────────────────────────────
   bool _initialised = false;
   static bool _sessionLogged = false;
 
+  String? _visitorId;
   int _visitCount = 0;
   double _maxScrollDepth = 0.0;
   List<String> _viewedProjectIds = [];
@@ -121,6 +124,14 @@ final class VisitorAnalytics {
     if (storage == null) return;
 
     try {
+      // Visitor ID.
+      _visitorId = storage.getString(_keyVisitorId);
+      if (_visitorId == null) {
+        final randomPart = (100000 + Random().nextInt(900000)).toString();
+        _visitorId = 'visitor_${DateTime.now().millisecondsSinceEpoch}_$randomPart';
+        storage.setString(_keyVisitorId, _visitorId!);
+      }
+
       // Visit count.
       _visitCount = (storage.getInt(_keyVisitCount) ?? 0) + 1;
       storage.setInt(_keyVisitCount, _visitCount);
@@ -286,6 +297,7 @@ final class VisitorAnalytics {
 
       // Construct a new record matching user specifications
       final Map<String, dynamic> newEntry = {
+        'visitor_id': _visitorId,
         'ip': ip,
         'city': city,
         'country': country,

@@ -643,8 +643,14 @@ class AdminView extends GetView<AdminController> {
   Widget _buildAnalyticsTab(BuildContext context) {
     final list = controller.analytics;
     final totalVisits = list.length;
-    final repeatingVisits = list.where((a) => a['repeating'] == true).length;
-    final uniqueVisits = totalVisits - repeatingVisits;
+    final uniqueVisits = list.map((a) {
+      final vId = a['visitorId']?.toString();
+      if (vId != null && vId.isNotEmpty) {
+        return vId;
+      }
+      return a['ip']?.toString() ?? '';
+    }).where((id) => id.isNotEmpty).toSet().length;
+    final repeatingVisits = totalVisits > uniqueVisits ? totalVisits - uniqueVisits : 0;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
