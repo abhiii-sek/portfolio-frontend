@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as dev;
 
@@ -762,7 +763,7 @@ class _ProfileDashboard extends StatelessWidget {
   }
 }
 
-class _HeatmapWidget extends StatelessWidget {
+class _HeatmapWidget extends StatefulWidget {
   const _HeatmapWidget({
     required this.contributions,
     required this.accent,
@@ -772,91 +773,182 @@ class _HeatmapWidget extends StatelessWidget {
   final Color accent;
 
   @override
-  Widget build(BuildContext context) => BorderLightCard(
-      glowColor: accent,
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.calendar_view_month_rounded, size: 16, color: accent.withValues(alpha: 0.8)),
-              const SizedBox(width: 8),
-              Text(
-                'GitHub Contribution Matrix (Last 12 Months)',
-                style: GoogleFonts.jetBrainsMono(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    const SizedBox(height: 16),
-                    for (final label in ['Mon', 'Wed', 'Fri'])
-                      Container(
-                        height: 13,
-                        alignment: Alignment.centerRight,
-                        margin: const EdgeInsets.only(right: 6),
-                        child: Text(
-                          label,
-                          style: GoogleFonts.jetBrainsMono(
-                            fontSize: 8,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                CustomPaint(
-                  painter: _HeatmapPainter(
-                    contributions: contributions,
-                    accent: accent,
-                  ),
-                  size: const Size(53 * 13, 7 * 13 + 16),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Text(
-                'Less',
-                style: GoogleFonts.jetBrainsMono(fontSize: 9, color: AppColors.textSecondary),
-              ),
-              const SizedBox(width: 4),
-              for (var i = 0; i <= 4; i++)
-                Container(
-                  width: 9,
-                  height: 9,
-                  margin: const EdgeInsets.symmetric(horizontal: 1.5),
-                  decoration: BoxDecoration(
-                    color: _colorForLevel(i, accent),
-                    borderRadius: BorderRadius.circular(1.5),
-                  ),
-                ),
-              const SizedBox(width: 4),
-              Text(
-                'More',
-                style: GoogleFonts.jetBrainsMono(fontSize: 9, color: AppColors.textSecondary),
-              ),
-            ],
-          ),
-        ],
+  State<_HeatmapWidget> createState() => _HeatmapWidgetState();
+}
+
+class _HeatmapWidgetState extends State<_HeatmapWidget> {
+  int _tapCount = 0;
+  late Timer _timer;
+  late DateTime _nextBirthday;
+
+  // Custom birthdate config (Abhishek's Birthday: 11 August)
+  static const int birthdayMonth = 08;
+  static const int birthdayDay = 11;
+
+  @override
+  void initState() {
+    super.initState();
+    _calculateNextBirthday();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        setState(_calculateNextBirthday);
+      }
+    });
+  }
+
+  void _calculateNextBirthday() {
+    final now = DateTime.now();
+    var bday = DateTime(now.year, birthdayMonth, birthdayDay);
+    if (bday.isBefore(now)) {
+      bday = DateTime(now.year + 1, birthdayMonth, birthdayDay);
+    }
+    _nextBirthday = bday;
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  void _handleTap() {
+    setState(() {
+      _tapCount++;
+      if (_tapCount >= 3) {
+        _tapCount = 0;
+        _showEasterEgg();
+      }
+    });
+  }
+
+  void _showEasterEgg() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => _BirthdayEasterEggDialog(
+        nextBirthday: _nextBirthday,
+        accent: widget.accent,
       ),
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Sum of all contribution counts
+    final totalContributions = widget.contributions.values.fold<int>(0, (sum, count) => sum + count);
+
+    // If total contributions > 50, we show the real heatmap.
+    // Otherwise, we show the countdown on the heatmap.
+    final showHeatmap = totalContributions > 50;
+
+    String? countdownString;
+    if (!showHeatmap) {
+      final duration = _nextBirthday.difference(DateTime.now());
+      final days = duration.inDays;
+      final paddedDays = days.toString().padLeft(3, '0');
+      countdownString = '$paddedDays DAY';
+    }
+
+    return GestureDetector(
+      onTap: _handleTap,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: BorderLightCard(
+          glowColor: widget.accent,
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    countdownString != null ? Icons.alarm_rounded : Icons.calendar_view_month_rounded,
+                    size: 16,
+                    color: widget.accent.withValues(alpha: 0.8),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    countdownString != null
+                        ? 'GitHub Contribution Matrix (Active Timer)'
+                        : 'GitHub Contribution Matrix (Last 12 Months)',
+                    style: GoogleFonts.jetBrainsMono(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const SizedBox(height: 16),
+                        for (final label in ['Mon', 'Tue', 'Wed', 'Thu','Fri', 'Sat', 'Sun'])
+                          Container(
+                            height: 13,
+                            alignment: Alignment.centerRight,
+                            margin: const EdgeInsets.only(right: 6),
+                            child: Text(
+                              label,
+                              style: GoogleFonts.jetBrainsMono(
+                                fontSize: 8,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    CustomPaint(
+                      painter: _HeatmapPainter(
+                        contributions: widget.contributions,
+                        accent: widget.accent,
+                        showDummyData: false, // Show real contribution matrix
+                        countdownString: countdownString,
+                      ),
+                      size: const Size(53 * 13, 7 * 13 + 16),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    'Less',
+                    style: GoogleFonts.jetBrainsMono(fontSize: 9, color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(width: 4),
+                  for (var i = 0; i <= 4; i++)
+                    Container(
+                      width: 9,
+                      height: 9,
+                      margin: const EdgeInsets.symmetric(horizontal: 1.5),
+                      decoration: BoxDecoration(
+                        color: _colorForLevel(i, widget.accent),
+                        borderRadius: BorderRadius.circular(1.5),
+                      ),
+                    ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'More',
+                    style: GoogleFonts.jetBrainsMono(fontSize: 9, color: AppColors.textSecondary),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   static Color _colorForLevel(int level, Color accent) {
     final isDark = Get.isDarkMode;
@@ -868,6 +960,176 @@ class _HeatmapWidget extends StatelessWidget {
       _ => accent,
     };
   }
+}
+
+class _BirthdayEasterEggDialog extends StatefulWidget {
+  const _BirthdayEasterEggDialog({
+    required this.nextBirthday,
+    required this.accent,
+  });
+
+  final DateTime nextBirthday;
+  final Color accent;
+
+  @override
+  State<_BirthdayEasterEggDialog> createState() => _BirthdayEasterEggDialogState();
+}
+
+class _BirthdayEasterEggDialogState extends State<_BirthdayEasterEggDialog> {
+  late Timer _dialogTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _dialogTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _dialogTimer.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final duration = widget.nextBirthday.difference(DateTime.now());
+    final days = duration.inDays;
+    final hours = duration.inHours % 24;
+    final minutes = duration.inMinutes % 60;
+    final seconds = duration.inSeconds % 60;
+
+    final isDark = Get.isDarkMode;
+    final dialogBg = isDark ? const Color(0xFF0D1117) : Colors.white;
+
+    return Center(
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          width: 380,
+          margin: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: dialogBg,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: widget.accent, width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: widget.accent.withValues(alpha: 0.3),
+                blurRadius: 24,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Cake & Party Header
+              Text(
+                '🎂 Birthday Easter Egg 🎂',
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: widget.accent,
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Default message requested by user
+              Text(
+                'Abhishek birthday coming remain date:',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Time components row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildUnit('d', days),
+                  _buildUnit('h', hours),
+                  _buildUnit('m', minutes),
+                  _buildUnit('s', seconds),
+                ],
+              ),
+              const SizedBox(height: 24),
+              // A nice message/footer
+              Text(
+                'Stay tuned for the celebration!',
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Close button
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: widget.accent.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(color: widget.accent),
+                    ),
+                    child: Text(
+                      'Awesome!',
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: widget.accent,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUnit(String label, int value) => Column(
+      children: [
+        Container(
+          width: 55,
+          height: 55,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: widget.accent.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: widget.accent.withValues(alpha: 0.3)),
+          ),
+          child: Text(
+            value.toString().padLeft(2, '0'),
+            style: GoogleFonts.spaceGrotesk(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textBright,
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label.toUpperCase(),
+          style: GoogleFonts.jetBrainsMono(
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
 }
 
 class _AvatarWidget extends StatelessWidget {
@@ -1097,10 +1359,14 @@ class _HeatmapPainter extends CustomPainter {
   _HeatmapPainter({
     required this.contributions,
     required this.accent,
+    required this.showDummyData,
+    this.countdownString,
   });
 
   final Map<String, int> contributions;
   final Color accent;
+  final bool showDummyData;
+  final String? countdownString;
 
   static const double _cellSize = 10;
   static const double _gap = 3;
@@ -1109,8 +1375,213 @@ class _HeatmapPainter extends CustomPainter {
   static const int _weeks = 53;
   static const int _days = 7;
 
+  static const Map<String, List<List<int>>> _font = {
+    '0': [
+      [1, 1, 1],
+      [1, 0, 1],
+      [1, 0, 1],
+      [1, 0, 1],
+      [1, 1, 1],
+    ],
+    '1': [
+      [0, 1, 0],
+      [0, 1, 0],
+      [0, 1, 0],
+      [0, 1, 0],
+      [0, 1, 0],
+    ],
+    '2': [
+      [1, 1, 1],
+      [0, 0, 1],
+      [1, 1, 1],
+      [1, 0, 0],
+      [1, 1, 1],
+    ],
+    '3': [
+      [1, 1, 1],
+      [0, 0, 1],
+      [1, 1, 1],
+      [0, 0, 1],
+      [1, 1, 1],
+    ],
+    '4': [
+      [1, 0, 1],
+      [1, 0, 1],
+      [1, 1, 1],
+      [0, 0, 1],
+      [0, 0, 1],
+    ],
+    '5': [
+      [1, 1, 1],
+      [1, 0, 0],
+      [1, 1, 1],
+      [0, 0, 1],
+      [1, 1, 1],
+    ],
+    '6': [
+      [1, 1, 1],
+      [1, 0, 0],
+      [1, 1, 1],
+      [1, 0, 1],
+      [1, 1, 1],
+    ],
+    '7': [
+      [1, 1, 1],
+      [0, 0, 1],
+      [0, 0, 1],
+      [0, 0, 1],
+      [0, 0, 1],
+    ],
+    '8': [
+      [1, 1, 1],
+      [1, 0, 1],
+      [1, 1, 1],
+      [1, 0, 1],
+      [1, 1, 1],
+    ],
+    '9': [
+      [1, 1, 1],
+      [1, 0, 1],
+      [1, 1, 1],
+      [0, 0, 1],
+      [1, 1, 1],
+    ],
+    'D': [
+      [1, 1, 0],
+      [1, 0, 1],
+      [1, 0, 1],
+      [1, 0, 1],
+      [1, 1, 0],
+    ],
+    'd': [
+      [1, 1, 0],
+      [1, 0, 1],
+      [1, 0, 1],
+      [1, 0, 1],
+      [1, 1, 0],
+    ],
+    ':': [
+      [0, 0, 0],
+      [0, 1, 0],
+      [0, 0, 0],
+      [0, 1, 0],
+      [0, 0, 0],
+    ],
+    '-': [
+      [0, 0, 0],
+      [0, 0, 0],
+      [1, 1, 1],
+      [0, 0, 0],
+      [0, 0, 0],
+    ],
+    ' ': [
+      [0, 0, 0],
+      [0, 0, 0],
+      [0, 0, 0],
+      [0, 0, 0],
+      [0, 0, 0],
+    ],
+    'A': [
+      [1, 1, 1],
+      [1, 0, 1],
+      [1, 1, 1],
+      [1, 0, 1],
+      [1, 0, 1],
+    ],
+    'a': [
+      [1, 1, 1],
+      [1, 0, 1],
+      [1, 1, 1],
+      [1, 0, 1],
+      [1, 0, 1],
+    ],
+    'Y': [
+      [1, 0, 1],
+      [1, 0, 1],
+      [0, 1, 0],
+      [0, 1, 0],
+      [0, 1, 0],
+    ],
+    'y': [
+      [1, 0, 1],
+      [1, 0, 1],
+      [0, 1, 0],
+      [0, 1, 0],
+      [0, 1, 0],
+    ],
+    'S': [
+      [1, 1, 1],
+      [1, 0, 0],
+      [1, 1, 1],
+      [0, 0, 1],
+      [1, 1, 1],
+    ],
+    's': [
+      [1, 1, 1],
+      [1, 0, 0],
+      [1, 1, 1],
+      [0, 0, 1],
+      [1, 1, 1],
+    ],
+  };
+
   @override
   void paint(Canvas canvas, Size size) {
+    final isDark = Get.isDarkMode;
+    final renderCountdown = countdownString != null && countdownString!.isNotEmpty;
+
+    if (renderCountdown) {
+      final text = countdownString!;
+      const charWidth = 3;
+      const charHeight = 5;
+      final gap = (text.length * 4 - 1 <= 53) ? 1 : 0;
+      final totalWidth = text.length * (charWidth + gap) - gap;
+      final startCol = (53 - totalWidth) ~/ 2;
+      const startRow = 1; // Center vertically on 7 rows (leaving row 0 and 6 empty)
+
+      // Create matrix pixel grid
+      final pixelOn = List.generate(53, (_) => List.generate(7, (_) => false));
+
+      for (var charIndex = 0; charIndex < text.length; charIndex++) {
+        final char = text[charIndex];
+        final fontPattern = _font[char] ?? _font[' '];
+        final colOffset = startCol + charIndex * (charWidth + gap);
+
+        for (var r = 0; r < charHeight; r++) {
+          for (var c = 0; c < charWidth; c++) {
+            if (colOffset + c >= 0 && colOffset + c < 53 && startRow + r >= 0 && startRow + r < 7) {
+              if (fontPattern![r][c] == 1) {
+                pixelOn[colOffset + c][startRow + r] = true;
+              }
+            }
+          }
+        }
+      }
+
+      // Paint grid cells
+      for (var week = 0; week < _weeks; week++) {
+        for (var day = 0; day < _days; day++) {
+          final isActive = pixelOn[week][day];
+          final cellPaint = Paint()
+            ..color = isActive
+                ? (isDark ? const Color(0xFF39D353) : const Color(0xFF216E39))
+                : (isDark ? const Color(0xFF161B22) : const Color(0xFFEBEDF0));
+
+          final rect = RRect.fromRectAndRadius(
+            Rect.fromLTWH(
+              week * _step,
+              16 + day * _step,
+              _cellSize,
+              _cellSize,
+            ),
+            const Radius.circular(_radius),
+          );
+          canvas.drawRRect(rect, cellPaint);
+        }
+      }
+      return; // Return early, don't draw normal contributions
+    }
+
     final now = DateTime.now();
     final origin = now.subtract(const Duration(days: 364));
     final startOfWeek = origin.subtract(Duration(days: origin.weekday - 1));
@@ -1161,7 +1632,7 @@ class _HeatmapPainter extends CustomPainter {
   }
 
   Color _colorForCount(int count, DateTime date) {
-    final effectiveCount = count > 0
+    final effectiveCount = (count > 0 || !showDummyData)
         ? count
         : (((date.day * 7 + date.month * 13) % 11) == 0
             ? 4
@@ -1207,7 +1678,10 @@ class _HeatmapPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_HeatmapPainter old) =>
-      accent != old.accent || contributions != old.contributions;
+      accent != old.accent ||
+      contributions != old.contributions ||
+      showDummyData != old.showDummyData ||
+      countdownString != old.countdownString;
 }
 
 class _RecentReposList extends StatefulWidget {
