@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:flutter_web_portfolio/app/controllers/language_controller.dart';
 import 'package:flutter_web_portfolio/app/controllers/scene_director.dart';
+import 'package:flutter_web_portfolio/app/core/constants/api_constants.dart';
 import 'package:flutter_web_portfolio/app/core/constants/app_colors.dart';
 import 'package:flutter_web_portfolio/app/core/constants/breakpoints.dart';
 import 'package:flutter_web_portfolio/app/core/constants/durations.dart';
@@ -622,8 +623,7 @@ class _GitHubActivityView extends StatelessWidget {
   final bool isDesktop;
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
+  Widget build(BuildContext context) => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (isDesktop)
@@ -680,7 +680,6 @@ class _GitHubActivityView extends StatelessWidget {
           ),
       ],
     );
-  }
 }
 
 class _ProfileDashboard extends StatelessWidget {
@@ -791,9 +790,32 @@ class _HeatmapWidgetState extends State<_HeatmapWidget> {
     _calculateNextBirthday();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) {
+        final duration = _nextBirthday.difference(DateTime.now());
+        if (duration.inSeconds <= 0) {
+          _triggerEasterWishesEmail();
+        }
         setState(_calculateNextBirthday);
       }
     });
+  }
+
+  Future<void> _triggerEasterWishesEmail() async {
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiConstants.baseUrl}/api/public/easter-send-email'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        debugPrint('messages sent and table cleared successfully');
+      } else {
+        debugPrint('Failed to trigger easters email: ${response.statusCode}');
+      }
+    } catch (e) {
+    }
   }
 
   void _calculateNextBirthday() {
@@ -869,7 +891,7 @@ class _HeatmapWidgetState extends State<_HeatmapWidget> {
                   const SizedBox(width: 8),
                   Text(
                     countdownString != null
-                        ? 'GitHub Contribution Matrix (Active Timer)'
+                        ? 'GitHub Contribution Matrix (Tap x3 for a secret 🤫)'
                         : 'GitHub Contribution Matrix (Last 12 Months)',
                     style: GoogleFonts.jetBrainsMono(
                       fontSize: 12,
@@ -962,6 +984,8 @@ class _HeatmapWidgetState extends State<_HeatmapWidget> {
   }
 }
 
+enum _DialogState { countdown, form, sending, success, error }
+
 class _BirthdayEasterEggDialog extends StatefulWidget {
   const _BirthdayEasterEggDialog({
     required this.nextBirthday,
@@ -977,12 +1001,16 @@ class _BirthdayEasterEggDialog extends StatefulWidget {
 
 class _BirthdayEasterEggDialogState extends State<_BirthdayEasterEggDialog> {
   late Timer _dialogTimer;
+  _DialogState _state = _DialogState.countdown;
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _messageController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _dialogTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) {
+      if (mounted && _state == _DialogState.countdown) {
         setState(() {});
       }
     });
@@ -991,24 +1019,52 @@ class _BirthdayEasterEggDialogState extends State<_BirthdayEasterEggDialog> {
   @override
   void dispose() {
     _dialogTimer.cancel();
+    _nameController.dispose();
+    _messageController.dispose();
     super.dispose();
+  }
+
+  Future<void> _submitWish() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    setState(() => _state = _DialogState.sending);
+
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiConstants.baseUrl}/api/public/easter-add-messages'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
+          'name': _nameController.text.trim(),
+          'message': _messageController.text.trim(),
+        }),
+      ).timeout(const Duration(seconds: 15));
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        setState(() => _state = _DialogState.success);
+      } else {
+        setState(() => _state = _DialogState.error);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _state = _DialogState.error);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final duration = widget.nextBirthday.difference(DateTime.now());
-    final days = duration.inDays;
-    final hours = duration.inHours % 24;
-    final minutes = duration.inMinutes % 60;
-    final seconds = duration.inSeconds % 60;
-
     final isDark = Get.isDarkMode;
     final dialogBg = isDark ? const Color(0xFF0D1117) : Colors.white;
 
     return Center(
       child: Material(
         color: Colors.transparent,
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
           width: 380,
           margin: const EdgeInsets.symmetric(horizontal: 20),
           padding: const EdgeInsets.all(24),
@@ -1024,69 +1080,336 @@ class _BirthdayEasterEggDialogState extends State<_BirthdayEasterEggDialog> {
               ),
             ],
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Cake & Party Header
-              Text(
-                '🎂 Birthday Easter Egg 🎂',
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: widget.accent,
-                ),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: SizeTransition(
+                sizeFactor: animation,
+                axisAlignment: 0.0,
+                child: child,
               ),
-              const SizedBox(height: 16),
-              // Default message requested by user
-              Text(
-                'Abhishek birthday coming remain date:',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 20),
-              // Time components row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildUnit('d', days),
-                  _buildUnit('h', hours),
-                  _buildUnit('m', minutes),
-                  _buildUnit('s', seconds),
-                ],
-              ),
-              const SizedBox(height: 24),
-              // A nice message/footer
-              Text(
-                'Stay tuned for the celebration!',
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Close button
-              MouseRegion(
+            ),
+            child: _buildStateView(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStateView() {
+    switch (_state) {
+      case _DialogState.countdown:
+        return _buildCountdownView();
+      case _DialogState.form:
+        return _buildFormView();
+      case _DialogState.sending:
+        return _buildSendingView();
+      case _DialogState.success:
+        return _buildSuccessView();
+      case _DialogState.error:
+        return _buildErrorView();
+    }
+  }
+
+  Widget _buildCountdownView() {
+    final duration = widget.nextBirthday.difference(DateTime.now());
+    final days = duration.inDays;
+    final hours = duration.inHours % 24;
+    final minutes = duration.inMinutes % 60;
+    final seconds = duration.inSeconds % 60;
+
+    return Column(
+      key: const ValueKey('countdown_state'),
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Cake & Party Header
+        Text(
+          '🎂 Birthday Easter Egg 🎂',
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: widget.accent,
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Default message requested by user
+        Text(
+          'Abhishek birthday coming remain date:',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 20),
+        // Time components row
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildUnit('d', days),
+            _buildUnit('h', hours),
+            _buildUnit('m', minutes),
+            _buildUnit('s', seconds),
+          ],
+        ),
+        const SizedBox(height: 24),
+        // A nice message/footer
+        Text(
+          'Stay tuned for the celebration!',
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 12,
+            color: AppColors.textSecondary,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+        const SizedBox(height: 24),
+        // Row of buttons: Close & Wish Him
+        Row(
+          children: [
+            Expanded(
+              child: MouseRegion(
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
                   onTap: () => Navigator.of(context).pop(),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: widget.accent.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(30),
-                      border: Border.all(color: widget.accent),
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.textSecondary.withValues(alpha: 0.3)),
                     ),
                     child: Text(
-                      'Awesome!',
+                      'Close',
                       style: GoogleFonts.jetBrainsMono(
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: widget.accent,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 2,
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () => setState(() => _state = _DialogState.form),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: widget.accent.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: widget.accent),
+                      boxShadow: [
+                        BoxShadow(
+                          color: widget.accent.withValues(alpha: 0.1),
+                          blurRadius: 8,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'Wish him on his birthday 🎂',
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: widget.accent,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFormView() {
+    final isDark = Get.isDarkMode;
+    final inputBg = isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03);
+    final borderCol = isDark ? Colors.white.withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.15);
+
+    return Form(
+      key: _formKey,
+      child: Column(
+        key: const ValueKey('form_state'),
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Text(
+              '🎉 Send Birthday Wish 🎉',
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: widget.accent,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Center(
+            child: Text(
+              'Your wish will be saved and sent to Abhishek when the countdown hits 0 days.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Name Input Field
+          Text(
+            'Your Name',
+            style: GoogleFonts.spaceGrotesk(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          TextFormField(
+            controller: _nameController,
+            style: GoogleFonts.spaceGrotesk(fontSize: 14, color: AppColors.textBright),
+            validator: (value) => value == null || value.trim().isEmpty ? 'Please enter your name' : null,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: inputBg,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: borderCol),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: widget.accent, width: 1.5),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Colors.redAccent),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
+              ),
+              hintText: 'e.g. abhishek',
+              hintStyle: GoogleFonts.spaceGrotesk(fontSize: 13, color: AppColors.textSecondary.withValues(alpha: 0.5)),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Message Input Field
+          Text(
+            'Birthday Wish',
+            style: GoogleFonts.spaceGrotesk(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          TextFormField(
+            controller: _messageController,
+            minLines: 3,
+            maxLines: 5,
+            style: GoogleFonts.spaceGrotesk(fontSize: 14, color: AppColors.textBright),
+            validator: (value) => value == null || value.trim().isEmpty ? 'Please write your birthday wish' : null,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: inputBg,
+              contentPadding: const EdgeInsets.all(14),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: borderCol),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: widget.accent, width: 1.5),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Colors.redAccent),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
+              ),
+              hintText: 'Write a warm message for Abhishek...',
+              hintStyle: GoogleFonts.spaceGrotesk(fontSize: 13, color: AppColors.textSecondary.withValues(alpha: 0.5)),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Action buttons
+          Row(
+            children: [
+              Expanded(
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: () => setState(() => _state = _DialogState.countdown),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.textSecondary.withValues(alpha: 0.3)),
+                      ),
+                      child: Text(
+                        'Back',
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: _submitWish,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: widget.accent.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: widget.accent),
+                        boxShadow: [
+                          BoxShadow(
+                            color: widget.accent.withValues(alpha: 0.1),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        'Send Wish 🚀',
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: widget.accent,
+                        ),
                       ),
                     ),
                   ),
@@ -1094,42 +1417,224 @@ class _BirthdayEasterEggDialogState extends State<_BirthdayEasterEggDialog> {
               ),
             ],
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildUnit(String label, int value) => Column(
+  Widget _buildSendingView() => Column(
+      key: const ValueKey('sending_state'),
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: 55,
-          height: 55,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: widget.accent.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: widget.accent.withValues(alpha: 0.3)),
-          ),
-          child: Text(
-            value.toString().padLeft(2, '0'),
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textBright,
-            ),
+        const SizedBox(height: 20),
+        SizedBox(
+          width: 50,
+          height: 50,
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(widget.accent),
+            strokeWidth: 3,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 24),
         Text(
-          label.toUpperCase(),
-          style: GoogleFonts.jetBrainsMono(
-            fontSize: 10,
+          'Sending your birthday wish...',
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 20),
+      ],
+    );
+
+  Widget _buildSuccessView() => Column(
+      key: const ValueKey('success_state'),
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(height: 10),
+        Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: const Color(0xFF2DA44E).withValues(alpha: 0.15),
+            border: Border.all(color: const Color(0xFF2DA44E), width: 2),
+          ),
+          child: const Icon(Icons.check_rounded, color: Color(0xFF2DA44E), size: 36),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          'Wish Saved Successfully! 🎉',
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: AppColors.textSecondary,
+            color: const Color(0xFF2DA44E),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Thank you! Your wish has been saved and will be sent to Abhishek when the countdown hits 0 days!',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 14,
+            height: 1.4,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 24),
+        MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: () => Navigator.of(context).pop(),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2DA44E).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF2DA44E)),
+              ),
+              child: Text(
+                'Awesome!',
+                style: GoogleFonts.jetBrainsMono(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF2DA44E),
+                ),
+              ),
+            ),
           ),
         ),
       ],
     );
+
+  Widget _buildErrorView() => Column(
+      key: const ValueKey('error_state'),
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(height: 10),
+        Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.redAccent.withValues(alpha: 0.15),
+            border: Border.all(color: Colors.redAccent, width: 2),
+          ),
+          child: const Icon(Icons.close_rounded, color: Colors.redAccent, size: 36),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          'Submission Failed',
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.redAccent,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Something went wrong. Please check your connection and try again.',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 14,
+            height: 1.4,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 24),
+        Row(
+          children: [
+            Expanded(
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.textSecondary.withValues(alpha: 0.3)),
+                    ),
+                    child: Text(
+                      'Close',
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 2,
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () => setState(() => _state = _DialogState.form),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Colors.redAccent.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.redAccent),
+                    ),
+                    child: Text(
+                      'Try Again',
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.redAccent,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+
+  Widget _buildUnit(String label, int value) => Column(
+        children: [
+          Container(
+            width: 55,
+            height: 55,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: widget.accent.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: widget.accent.withValues(alpha: 0.3)),
+            ),
+            child: Text(
+              value.toString().padLeft(2, '0'),
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textBright,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label.toUpperCase(),
+            style: GoogleFonts.jetBrainsMono(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      );
 }
 
 class _AvatarWidget extends StatelessWidget {
