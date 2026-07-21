@@ -116,7 +116,31 @@ class LanguageController extends GetxController {
       final metadata = json.decode(utf8.decode(responses[0].bodyBytes)) as Map<String, dynamic>;
       final personalInfo = json.decode(utf8.decode(responses[1].bodyBytes));
       final experiences = json.decode(utf8.decode(responses[2].bodyBytes));
-      final projects = json.decode(utf8.decode(responses[3].bodyBytes));
+      final projectsRaw = json.decode(utf8.decode(responses[3].bodyBytes));
+      final projects = <dynamic>[];
+      if (projectsRaw is List) {
+        for (final item in projectsRaw) {
+          if (item is Map) {
+            final proj = Map<String, dynamic>.from(item);
+            final title = proj['title']?.toString() ?? '';
+            final image = proj['image']?.toString() ?? '';
+            if (image == 'assets/images/project_default.png' || image.isEmpty) {
+              if (title.contains('AI-Mailing')) {
+                proj['image'] = 'assets/images/project_ai_mailing.png';
+              } else if (title.contains('TextFlix-AI')) {
+                proj['image'] = 'assets/images/project_textflix_ai.png';
+              } else if (title.contains('Bank Management System') || title.toLowerCase().contains('bank')) {
+                proj['image'] = 'assets/images/project_bank_management.png';
+              } else if (title.contains('Snake-game') || title.toLowerCase().contains('snake')) {
+                proj['image'] = 'assets/images/project_snake_game.png';
+              }
+            }
+            projects.add(proj);
+          } else {
+            projects.add(item);
+          }
+        }
+      }
       final education = json.decode(utf8.decode(responses[4].bodyBytes));
       final skills = json.decode(utf8.decode(responses[5].bodyBytes));
       final testimonials = json.decode(utf8.decode(responses[6].bodyBytes));
