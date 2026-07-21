@@ -190,7 +190,7 @@ class _AdvancedLeetCodeProfileCard extends StatelessWidget {
 
     return BorderLightCard(
       glowColor: brandColor,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -257,13 +257,13 @@ class _AdvancedLeetCodeProfileCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
           // Radial Problem Progress Ring Centerpiece
           Center(
             child: SizedBox(
-              width: 160,
-              height: 160,
+              width: 120,
+              height: 120,
               child: CustomPaint(
                 painter: _RadialProblemDialPainter(
                   easySolved: easySolved,
@@ -281,7 +281,7 @@ class _AdvancedLeetCodeProfileCard extends StatelessWidget {
                       AnimatedCounter(
                         endValue: totalSolved,
                         style: GoogleFonts.spaceGrotesk(
-                          fontSize: 28,
+                          fontSize: 22,
                           fontWeight: FontWeight.bold,
                           color: AppColors.textBright,
                         ),
@@ -289,13 +289,13 @@ class _AdvancedLeetCodeProfileCard extends StatelessWidget {
                       Text(
                         '/ $totalQuestions',
                         style: GoogleFonts.spaceGrotesk(
-                          fontSize: 11,
+                          fontSize: 10,
                           color: AppColors.textSecondary,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 1),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                         decoration: BoxDecoration(
                           color: easyGreen.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(10),
@@ -303,7 +303,7 @@ class _AdvancedLeetCodeProfileCard extends StatelessWidget {
                         child: Text(
                           'SOLVED',
                           style: GoogleFonts.jetBrainsMono(
-                            fontSize: 9,
+                            fontSize: 8,
                             fontWeight: FontWeight.bold,
                             color: easyGreen,
                             letterSpacing: 1,
@@ -316,7 +316,7 @@ class _AdvancedLeetCodeProfileCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 16),
 
           // Tiers Progress Meter Bars
           _DifficultyTierBar(
@@ -325,21 +325,21 @@ class _AdvancedLeetCodeProfileCard extends StatelessWidget {
             total: easyTotal,
             color: easyGreen,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           _DifficultyTierBar(
             label: 'Medium',
             solved: mediumSolved,
             total: mediumTotal,
             color: mediumYellow,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           _DifficultyTierBar(
             label: 'Hard',
             solved: hardSolved,
             total: hardTotal,
             color: hardRed,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
           SizedBox(
             width: double.infinity,
@@ -462,7 +462,7 @@ class _DifficultyTierBar extends StatelessWidget {
     final percent = total > 0 ? (solved / total).clamp(0.0, 1.0) : 0.0;
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: AppColors.backgroundLight.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(10),
@@ -502,12 +502,12 @@ class _DifficultyTierBar extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 5),
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: percent,
-              minHeight: 6,
+              minHeight: 5,
               backgroundColor: color.withValues(alpha: 0.12),
               valueColor: AlwaysStoppedAnimation<Color>(color),
             ),
@@ -675,7 +675,7 @@ class _MetricCardTile extends StatelessWidget {
   }
 }
 
-class _AdvancedSubmissionsTerminal extends StatelessWidget {
+class _AdvancedSubmissionsTerminal extends StatefulWidget {
   const _AdvancedSubmissionsTerminal({
     required this.submissions,
     required this.accent,
@@ -685,19 +685,80 @@ class _AdvancedSubmissionsTerminal extends StatelessWidget {
   final Color accent;
 
   @override
+  State<_AdvancedSubmissionsTerminal> createState() => _AdvancedSubmissionsTerminalState();
+}
+
+class _AdvancedSubmissionsTerminalState extends State<_AdvancedSubmissionsTerminal> {
+  final ScrollController _scrollController = ScrollController();
+  bool _showLeftArrow = false;
+  bool _showRightArrow = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkScrollability();
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant _AdvancedSubmissionsTerminal oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkScrollability();
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() => _checkScrollability();
+
+  void _checkScrollability() {
+    if (!_scrollController.hasClients) return;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.offset;
+    if (!mounted) return;
+    setState(() {
+      _showLeftArrow = currentScroll > 10;
+      _showRightArrow = currentScroll < maxScroll - 10 && maxScroll > 0;
+    });
+  }
+
+  void _scrollBy(double offset) {
+    _scrollController.animateTo(
+      (_scrollController.offset + offset).clamp(
+        0.0,
+        _scrollController.position.maxScrollExtent,
+      ),
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (widget.submissions.isEmpty) return const SizedBox.shrink();
+
     return BorderLightCard(
       glowColor: const Color(0xFFFFA116),
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 600;
+
+              final titleWidget = Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.terminal_rounded, size: 18, color: const Color(0xFF00B8A3)),
+                  Icon(Icons.terminal_rounded, size: 18, color: const Color(0xFFFFA116)),
                   const SizedBox(width: 8),
                   Text(
                     'Recent Accepted Submissions (Live AC)',
@@ -708,8 +769,9 @@ class _AdvancedSubmissionsTerminal extends StatelessWidget {
                     ),
                   ),
                 ],
-              ),
-              Container(
+              );
+
+              final verifiedBadge = Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: const Color(0xFF00B8A3).withValues(alpha: 0.15),
@@ -717,6 +779,7 @@ class _AdvancedSubmissionsTerminal extends StatelessWidget {
                   border: Border.all(color: const Color(0xFF00B8A3).withValues(alpha: 0.3)),
                 ),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
                       width: 6,
@@ -737,26 +800,110 @@ class _AdvancedSubmissionsTerminal extends StatelessWidget {
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isMobile = constraints.maxWidth < 600;
-              final list = submissions.take(6).toList();
-              return GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: isMobile ? 1 : 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 10,
-                childAspectRatio: isMobile ? 3.6 : 3.4,
-                children: list.map((sub) => _SubmissionGridCard(submission: sub, accent: accent)).toList(),
+              );
+
+              final scrollButtons = Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _ScrollIconButton(
+                    icon: Icons.chevron_left_rounded,
+                    enabled: _showLeftArrow,
+                    accent: widget.accent,
+                    onTap: () => _scrollBy(-260),
+                  ),
+                  const SizedBox(width: 4),
+                  _ScrollIconButton(
+                    icon: Icons.chevron_right_rounded,
+                    enabled: _showRightArrow,
+                    accent: widget.accent,
+                    onTap: () => _scrollBy(260),
+                  ),
+                ],
+              );
+
+              if (isNarrow) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    titleWidget,
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        verifiedBadge,
+                        scrollButtons,
+                      ],
+                    ),
+                  ],
+                );
+              }
+
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      titleWidget,
+                      const SizedBox(width: 12),
+                      verifiedBadge,
+                    ],
+                  ),
+                  scrollButtons,
+                ],
               );
             },
           ),
+          const SizedBox(height: 16),
+          SingleChildScrollView(
+            controller: _scrollController,
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: widget.submissions.map((sub) => Padding(
+                padding: const EdgeInsets.only(right: 14),
+                child: SizedBox(
+                  width: 260,
+                  height: 110,
+                  child: _SubmissionGridCard(submission: sub, accent: widget.accent),
+                ),
+              )).toList(),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _ScrollIconButton extends StatelessWidget {
+  const _ScrollIconButton({
+    required this.icon,
+    required this.enabled,
+    required this.accent,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final bool enabled;
+  final Color accent;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: enabled ? onTap : null,
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: enabled ? accent.withValues(alpha: 0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Icon(
+          icon,
+          size: 18,
+          color: enabled ? accent : AppColors.textSecondary.withValues(alpha: 0.3),
+        ),
       ),
     );
   }
