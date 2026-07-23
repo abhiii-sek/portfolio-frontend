@@ -1,5 +1,5 @@
 final class ApiConstants {
   ApiConstants._();
 
-  static const String baseUrl = 'http://localhost:8080';
+  static const String baseUrl = 'http://130.210.56.28:8080';
 }
