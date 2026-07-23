@@ -4,7 +4,6 @@ import 'package:flutter_web_portfolio/app/controllers/personalization_controller
 import 'package:flutter_web_portfolio/app/controllers/scene_director.dart';
 import 'package:flutter_web_portfolio/app/controllers/scroll_controller.dart';
 import 'package:flutter_web_portfolio/app/data/providers/github_provider.dart';
-import 'package:flutter_web_portfolio/app/data/providers/medium_provider.dart';
 import 'package:flutter_web_portfolio/app/data/providers/local_storage_provider.dart';
 import 'package:flutter_web_portfolio/app/domain/providers/i_local_storage_provider.dart';
 import 'package:flutter_web_portfolio/app/controllers/language_controller.dart';
@@ -38,7 +37,6 @@ class AppBindings extends Bindings {
       ..put(AppScrollController(), permanent: true)
       ..put(SceneDirector(), permanent: true)
       ..put(CursorController(), permanent: true)
-      ..put(MediumProvider(), permanent: true)
       ..put(GitHubProvider(), permanent: true)
       ..put(PersonalizationController(), permanent: true);
   }

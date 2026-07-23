@@ -112,9 +112,11 @@ class AdminView extends GetView<AdminController> {
                   : Container(
                       width: double.infinity,
                       height: 50,
-                      child: CinematicButton(
-                        label: 'AUTHENTICATE',
-                        onTap: controller.login,
+                      child: Center(
+                        child: CinematicButton(
+                          label: 'AUTHENTICATE',
+                          onTap: controller.login,
+                        ),
                       ),
                     ),
               ),
@@ -160,7 +162,7 @@ class AdminView extends GetView<AdminController> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Logged in as Administrator',
+                        'Welcome Admin',
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           color: AppColors.heroAccent,

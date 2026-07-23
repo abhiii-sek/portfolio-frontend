@@ -47,7 +47,7 @@ final class AppConfig {
   /// Physical location string.
   static String location(LanguageController lc) => lc.getText(
         'cv_data.personal_info.location',
-        defaultValue: '',
+        defaultValue: 'Noida, India',
       );
 
   // ─── Stats ─────────────────────────────────────────────────────────
