@@ -91943,7 +91943,7 @@ case 6:case 1:return A.J(q,r)
 case 2:return A.I(o.at(-1),r)}})
 return A.K($async$A5,r)}}
 A.ahF.prototype={
-$1(a){return A.ir(A.bq("/api/api/public/portfolio/"+a,0,null),null).eu(0,B.ia)},
+$1(a){return A.ir(A.bq("/api/public/portfolio/"+a,0,null),null).eu(0,B.ia)},
 $S:541}
 A.wR.prototype={
 ki(){this.o6()
@@ -92671,7 +92671,7 @@ p=4
 e=m.ay
 d=t.N
 l=A.an(["email",B.c.aO(a0.a.a),"password",e.a.a],d,d)
-c=A.bq("/api/api/auth/login",0,null)
+c=A.bq("/api/auth/login",0,null)
 d=A.an(["Content-Type","application/json"],d,d)
 s=7
 return A.B(A.m8(c,B.V.fH(l,null),d).eu(0,B.bK),$async$wO)
@@ -92763,7 +92763,7 @@ wN(){var s=0,r=A.L(t.H),q=1,p=[],o=this,n,m,l,k,j,i,h
 var $async$wN=A.M(function(a,b){if(a===1){p.push(b)
 s=q}while(true)switch(s){case 0:q=3
 s=6
-return A.B(A.ir(A.bq("/api/api/admin/personal-info",0,null),o.geb()).eu(0,B.bK),$async$wN)
+return A.B(A.ir(A.bq("/api/admin/personal-info",0,null),o.geb()).eu(0,B.bK),$async$wN)
 case 6:n=b
 if(n.b===200){m=t.j.a(B.V.i0(0,B.a0.bx(0,n.w),null))
 if(J.hh(m)){l=J.v_(m)
@@ -92874,7 +92874,7 @@ if(a6==null)a6=0
 l=A.an(["name",g,"title",f,"tagline",e,"phone",a9,"email",d,"location",c,"bio",b,"linkedInUsername",a,"resumeUrl",a0,"githubUsername",a1,"leetcodeUsername",a2,"instagramUsername",a3,"yearsExperience",a4,"projectsCompleted",a5,"technologies",a6],t.N,t.K)
 a6=m.p2
 k=J.bv(a6.gm(0))!==0
-j=k?A.bq("/api/api/admin/personal-info/"+A.m(a6.gm(0)),0,null):A.bq("/api/api/admin/personal-info",0,null)
+j=k?A.bq("/api/admin/personal-info/"+A.m(a6.gm(0)),0,null):A.bq("/api/admin/personal-info",0,null)
 s=k?7:9
 break
 case 7:g=m.geb()
@@ -92924,7 +92924,7 @@ t3(){var s=0,r=A.L(t.H),q=1,p=[],o=this,n,m,l,k,j,i,h
 var $async$t3=A.M(function(a,b){if(a===1){p.push(b)
 s=q}while(true)switch(s){case 0:q=3
 s=6
-return A.B(A.ir(A.bq("/api/api/admin/experiences",0,null),o.geb()).eu(0,B.bK),$async$t3)
+return A.B(A.ir(A.bq("/api/admin/experiences",0,null),o.geb()).eu(0,B.bK),$async$t3)
 case 6:n=b
 if(n.b===200){m=t.j.a(B.V.i0(0,B.a0.bx(0,n.w),null))
 k=J.fr(m,t.P)
@@ -92952,14 +92952,14 @@ g.sm(0,!0)
 q=3
 s=a!=null?6:8
 break
-case 6:k=A.bq("/api/api/admin/experiences/"+a,0,null)
+case 6:k=A.bq("/api/admin/experiences/"+a,0,null)
 j=n.geb()
 s=9
 return A.B(A.a6y(k,B.V.fH(b,null),j),$async$nV)
 case 9:i=d
 s=7
 break
-case 8:k=A.bq("/api/api/admin/experiences",0,null)
+case 8:k=A.bq("/api/admin/experiences",0,null)
 j=n.geb()
 s=10
 return A.B(A.m8(k,B.V.fH(b,null),j),$async$nV)
@@ -93003,7 +93003,7 @@ s=q}while(true)switch(s){case 0:i=n.p1
 i.sm(0,!0)
 q=3
 s=6
-return A.B(A.N_(A.bq("/api/api/admin/experiences/"+a,0,null),n.geb()),$async$rt)
+return A.B(A.N_(A.bq("/api/admin/experiences/"+a,0,null),n.geb()),$async$rt)
 case 6:m=c
 s=m.b===200?7:9
 break
@@ -93040,7 +93040,7 @@ t4(){var s=0,r=A.L(t.H),q=1,p=[],o=this,n,m,l,k,j,i,h
 var $async$t4=A.M(function(a,b){if(a===1){p.push(b)
 s=q}while(true)switch(s){case 0:q=3
 s=6
-return A.B(A.ir(A.bq("/api/api/admin/projects",0,null),o.geb()).eu(0,B.bK),$async$t4)
+return A.B(A.ir(A.bq("/api/admin/projects",0,null),o.geb()).eu(0,B.bK),$async$t4)
 case 6:n=b
 if(n.b===200){m=t.j.a(B.V.i0(0,B.a0.bx(0,n.w),null))
 k=J.fr(m,t.P)
@@ -93068,14 +93068,14 @@ g.sm(0,!0)
 q=3
 s=a!=null?6:8
 break
-case 6:k=A.bq("/api/api/admin/projects/"+a,0,null)
+case 6:k=A.bq("/api/admin/projects/"+a,0,null)
 j=n.geb()
 s=9
 return A.B(A.a6y(k,B.V.fH(b,null),j),$async$nX)
 case 9:i=d
 s=7
 break
-case 8:k=A.bq("/api/api/admin/projects",0,null)
+case 8:k=A.bq("/api/admin/projects",0,null)
 j=n.geb()
 s=10
 return A.B(A.m8(k,B.V.fH(b,null),j),$async$nX)
@@ -93120,7 +93120,7 @@ s=q}while(true)switch(s){case 0:i=n.p1
 i.sm(0,!0)
 q=3
 s=6
-return A.B(A.N_(A.bq("/api/api/admin/projects/"+a,0,null),n.geb()),$async$ru)
+return A.B(A.N_(A.bq("/api/admin/projects/"+a,0,null),n.geb()),$async$ru)
 case 6:m=c
 s=m.b===200?7:9
 break
@@ -93157,7 +93157,7 @@ t5(){var s=0,r=A.L(t.H),q=1,p=[],o=this,n,m,l,k,j
 var $async$t5=A.M(function(a,b){if(a===1){p.push(b)
 s=q}while(true)switch(s){case 0:q=3
 s=6
-return A.B(A.ir(A.bq("/api/api/admin/skills",0,null),o.geb()).eu(0,B.bK),$async$t5)
+return A.B(A.ir(A.bq("/api/admin/skills",0,null),o.geb()).eu(0,B.bK),$async$t5)
 case 6:n=b
 if(n.b===200){m=t.j.a(B.V.i0(0,B.a0.bx(0,n.w),null))
 o.R8.sm(0,J.fr(m,t.P))}q=1
@@ -93180,7 +93180,7 @@ var $async$q1=A.M(function(b,c){if(b===1){p.push(c)
 s=q}while(true)switch(s){case 0:h=n.p1
 h.sm(0,!0)
 q=3
-k=A.bq("/api/api/admin/skills",0,null)
+k=A.bq("/api/admin/skills",0,null)
 j=n.geb()
 s=6
 return A.B(A.m8(k,B.V.fH(a,null),j),$async$q1)
@@ -93223,7 +93223,7 @@ s=q}while(true)switch(s){case 0:i=n.p1
 i.sm(0,!0)
 q=3
 s=6
-return A.B(A.N_(A.bq("/api/api/admin/skills/"+a,0,null),n.geb()),$async$rv)
+return A.B(A.N_(A.bq("/api/admin/skills/"+a,0,null),n.geb()),$async$rv)
 case 6:m=c
 s=m.b===200?7:9
 break
@@ -93260,7 +93260,7 @@ t6(){var s=0,r=A.L(t.H),q=1,p=[],o=this,n,m,l,k,j,i,h
 var $async$t6=A.M(function(a,b){if(a===1){p.push(b)
 s=q}while(true)switch(s){case 0:q=3
 s=6
-return A.B(A.ir(A.bq("/api/api/admin/testimonials",0,null),o.geb()).eu(0,B.bK),$async$t6)
+return A.B(A.ir(A.bq("/api/admin/testimonials",0,null),o.geb()).eu(0,B.bK),$async$t6)
 case 6:n=b
 if(n.b===200){m=t.j.a(B.V.i0(0,B.a0.bx(0,n.w),null))
 k=J.fr(m,t.P)
@@ -93288,14 +93288,14 @@ g.sm(0,!0)
 q=3
 s=a!=null?6:8
 break
-case 6:k=A.bq("/api/api/admin/testimonials/"+a,0,null)
+case 6:k=A.bq("/api/admin/testimonials/"+a,0,null)
 j=n.geb()
 s=9
 return A.B(A.a6y(k,B.V.fH(b,null),j),$async$nY)
 case 9:i=d
 s=7
 break
-case 8:k=A.bq("/api/api/admin/testimonials",0,null)
+case 8:k=A.bq("/api/admin/testimonials",0,null)
 j=n.geb()
 s=10
 return A.B(A.m8(k,B.V.fH(b,null),j),$async$nY)
@@ -93339,7 +93339,7 @@ s=q}while(true)switch(s){case 0:i=n.p1
 i.sm(0,!0)
 q=3
 s=6
-return A.B(A.N_(A.bq("/api/api/admin/testimonials/"+a,0,null),n.geb()),$async$rw)
+return A.B(A.N_(A.bq("/api/admin/testimonials/"+a,0,null),n.geb()),$async$rw)
 case 6:m=c
 s=m.b===200?7:9
 break
@@ -93376,7 +93376,7 @@ t2(){var s=0,r=A.L(t.H),q=1,p=[],o=this,n,m,l,k,j,i
 var $async$t2=A.M(function(a,b){if(a===1){p.push(b)
 s=q}while(true)switch(s){case 0:q=3
 s=6
-return A.B(A.ir(A.bq("/api/api/admin/educations",0,null),o.geb()).eu(0,B.bK),$async$t2)
+return A.B(A.ir(A.bq("/api/admin/educations",0,null),o.geb()).eu(0,B.bK),$async$t2)
 case 6:n=b
 if(n.b===200){m=t.j.a(B.V.i0(0,B.a0.bx(0,n.w),null))
 l=J.fr(m,t.P)
@@ -93403,14 +93403,14 @@ g.sm(0,!0)
 q=3
 s=a!=null?6:8
 break
-case 6:k=A.bq("/api/api/admin/educations/"+a,0,null)
+case 6:k=A.bq("/api/admin/educations/"+a,0,null)
 j=n.geb()
 s=9
 return A.B(A.a6y(k,B.V.fH(b,null),j),$async$nU)
 case 9:i=d
 s=7
 break
-case 8:k=A.bq("/api/api/admin/educations",0,null)
+case 8:k=A.bq("/api/admin/educations",0,null)
 j=n.geb()
 s=10
 return A.B(A.m8(k,B.V.fH(b,null),j),$async$nU)
@@ -93455,7 +93455,7 @@ s=q}while(true)switch(s){case 0:i=n.p1
 i.sm(0,!0)
 q=3
 s=6
-return A.B(A.N_(A.bq("/api/api/admin/educations/"+a,0,null),n.geb()),$async$rs)
+return A.B(A.N_(A.bq("/api/admin/educations/"+a,0,null),n.geb()),$async$rs)
 case 6:m=c
 s=m.b===200?7:9
 break
@@ -93492,7 +93492,7 @@ C4(){var s=0,r=A.L(t.H),q=1,p=[],o=this,n,m,l,k,j,i,h
 var $async$C4=A.M(function(a,b){if(a===1){p.push(b)
 s=q}while(true)switch(s){case 0:q=3
 s=6
-return A.B(A.ir(A.bq("/api/api/admin/analytics",0,null),o.geb()).eu(0,B.bK),$async$C4)
+return A.B(A.ir(A.bq("/api/admin/analytics",0,null),o.geb()).eu(0,B.bK),$async$C4)
 case 6:n=b
 if(n.b===200){m=t.j.a(B.V.i0(0,B.a0.bx(0,n.w),null))
 k=J.fr(m,t.P)
@@ -94731,7 +94731,7 @@ e=e==null?null:e.xz()
 if(e!==!0){s=1
 break}n.M(new A.ay0(n))
 p=4
-e=A.bq("/api/api/public/contact",0,null)
+e=A.bq("/api/public/contact",0,null)
 k=t.N
 j=A.an(["Content-Type","application/json","Accept","application/json"],k,k)
 i=n.e
@@ -95232,7 +95232,7 @@ $S:0}
 A.auM.prototype={
 $0(){var s=0,r=A.L(t.H),q
 var $async$$0=A.M(function(a,b){if(a===1)return A.I(b,r)
-while(true)switch(s){case 0:q=A.bq("/api/api/public/resume",0,null)
+while(true)switch(s){case 0:q=A.bq("/api/public/resume",0,null)
 s=4
 return A.B(A.m3(q),$async$$0)
 case 4:s=b?2:3
@@ -95618,7 +95618,7 @@ var $async$A_=A.M(function(a,b){if(a===1){p.push(b)
 s=q}while(true)switch(s){case 0:q=3
 n=t.N
 s=6
-return A.B(A.m8(A.bq("/api/api/public/easter-send-email",0,null),null,A.an(["Content-Type","application/json","Accept","application/json"],n,n)).eu(0,B.ia),$async$A_)
+return A.B(A.m8(A.bq("/api/public/easter-send-email",0,null),null,A.an(["Content-Type","application/json","Accept","application/json"],n,n)).eu(0,B.ia),$async$A_)
 case 6:o=b
 if(o.b===200)A.j6().$1("messages sent and table cleared successfully")
 else A.j6().$1("Failed to trigger easters email: "+o.b)
@@ -95724,7 +95724,7 @@ i=i==null?null:i.xz()
 if(i!==!0){s=1
 break}n.M(new A.aw0(n))
 p=4
-i=A.bq("/api/api/public/easter-add-messages",0,null)
+i=A.bq("/api/public/easter-add-messages",0,null)
 l=t.N
 k=A.an(["Content-Type","application/json","Accept","application/json"],l,l)
 s=7
@@ -97296,7 +97296,7 @@ ajT(a){var s=0,r=A.L(t.H),q=1,p=[],o,n,m,l
 var $async$zr=A.M(function(b,c){if(b===1){p.push(c)
 s=q}while(true)switch(s){case 0:q=3
 s=6
-return A.B(A.m8(A.bq("/api/api/public/analytics",0,null),B.V.fH(a,null),B.Pn).eu(0,B.bK),$async$zr)
+return A.B(A.m8(A.bq("/api/public/analytics",0,null),B.V.fH(a,null),B.Pn).eu(0,B.bK),$async$zr)
 case 6:o=c
 if(o.b!==200)o.toString
 q=1
