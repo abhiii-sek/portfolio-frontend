@@ -1,5 +1,5 @@
 final class ApiConstants {
   ApiConstants._();
 
-  static const String baseUrl = '/api';
+  static const String baseUrl = '';
 }
